@@ -1,0 +1,240 @@
+{
+  "targets": [
+    {
+      "isStage": true,
+      "name": "Stage",
+      "variables": {
+        "var_a": ["a", "0"],
+        "var_b": ["b", "1"],
+        "var_n": ["n", "0"],
+        "var_count": ["count", "10"],
+        "var_temp": ["temp", "0"]
+      },
+      "blocks": {
+        "hat1": {
+          "opcode": "event_whenflagclicked",
+          "next": "set_a",
+          "parent": null,
+          "inputs": {},
+          "fields": {},
+          "shadow": false,
+          "topLevel": true
+        },
+        "set_a": {
+          "opcode": "data_setvariableto",
+          "next": "set_b",
+          "parent": "hat1",
+          "inputs": {
+            "VALUE": [1, [4, "0"]]
+          },
+          "fields": {
+            "VARIABLE": ["a", "var_a"]
+          },
+          "shadow": false,
+          "topLevel": false
+        },
+        "set_b": {
+          "opcode": "data_setvariableto",
+          "next": "set_n",
+          "parent": "set_a",
+          "inputs": {
+            "VALUE": [1, [4, "1"]]
+          },
+          "fields": {
+            "VARIABLE": ["b", "var_b"]
+          },
+          "shadow": false,
+          "topLevel": false
+        },
+        "set_n": {
+          "opcode": "data_setvariableto",
+          "next": "say_a",
+          "parent": "set_b",
+          "inputs": {
+            "VALUE": [1, [4, "0"]]
+          },
+          "fields": {
+            "VARIABLE": ["n", "var_n"]
+          },
+          "shadow": false,
+          "topLevel": false
+        },
+        "say_a": {
+          "opcode": "looks_say",
+          "next": "repeat1",
+          "parent": "set_n",
+          "inputs": {
+            "MESSAGE": [3, "var_a_reporter", [4, ""]]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false
+        },
+        "var_a_reporter": {
+          "opcode": "data_variable",
+          "next": null,
+          "parent": "say_a",
+          "inputs": {},
+          "fields": {
+            "VARIABLE": ["a", "var_a"]
+          },
+          "shadow": false,
+          "topLevel": false
+        },
+        "repeat1": {
+          "opcode": "control_repeat",
+          "next": null,
+          "parent": "say_a",
+          "inputs": {
+            "TIMES": [3, "count_reporter", [4, "10"]],
+            "SUBSTACK": [2, "set_temp"]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false
+        },
+        "count_reporter": {
+          "opcode": "data_variable",
+          "next": null,
+          "parent": "repeat1",
+          "inputs": {},
+          "fields": {
+            "VARIABLE": ["count", "var_count"]
+          },
+          "shadow": false,
+          "topLevel": false
+        },
+        "set_temp": {
+          "opcode": "data_setvariableto",
+          "next": "set_a2",
+          "parent": "repeat1",
+          "inputs": {
+            "VALUE": [3, "add_ab", [4, "0"]]
+          },
+          "fields": {
+            "VARIABLE": ["temp", "var_temp"]
+          },
+          "shadow": false,
+          "topLevel": false
+        },
+        "add_ab": {
+          "opcode": "operator_add",
+          "next": null,
+          "parent": "set_temp",
+          "inputs": {
+            "NUM1": [3, "var_a_rep2", [4, ""]],
+            "NUM2": [3, "var_b_rep1", [4, ""]]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false
+        },
+        "var_a_rep2": {
+          "opcode": "data_variable",
+          "next": null,
+          "parent": "add_ab",
+          "inputs": {},
+          "fields": {
+            "VARIABLE": ["a", "var_a"]
+          },
+          "shadow": false,
+          "topLevel": false
+        },
+        "var_b_rep1": {
+          "opcode": "data_variable",
+          "next": null,
+          "parent": "add_ab",
+          "inputs": {},
+          "fields": {
+            "VARIABLE": ["b", "var_b"]
+          },
+          "shadow": false,
+          "topLevel": false
+        },
+        "set_a2": {
+          "opcode": "data_setvariableto",
+          "next": "set_b2",
+          "parent": "set_temp",
+          "inputs": {
+            "VALUE": [3, "var_b_rep2", [4, ""]]
+          },
+          "fields": {
+            "VARIABLE": ["a", "var_a"]
+          },
+          "shadow": false,
+          "topLevel": false
+        },
+        "var_b_rep2": {
+          "opcode": "data_variable",
+          "next": null,
+          "parent": "set_a2",
+          "inputs": {},
+          "fields": {
+            "VARIABLE": ["b", "var_b"]
+          },
+          "shadow": false,
+          "topLevel": false
+        },
+        "set_b2": {
+          "opcode": "data_setvariableto",
+          "next": "say_a2",
+          "parent": "set_a2",
+          "inputs": {
+            "VALUE": [3, "var_temp_rep1", [4, ""]]
+          },
+          "fields": {
+            "VARIABLE": ["b", "var_b"]
+          },
+          "shadow": false,
+          "topLevel": false
+        },
+        "var_temp_rep1": {
+          "opcode": "data_variable",
+          "next": null,
+          "parent": "set_b2",
+          "inputs": {},
+          "fields": {
+            "VARIABLE": ["temp", "var_temp"]
+          },
+          "shadow": false,
+          "topLevel": false
+        },
+        "say_a2": {
+          "opcode": "looks_say",
+          "next": "change_n",
+          "parent": "set_b2",
+          "inputs": {
+            "MESSAGE": [3, "var_a_rep3", [4, ""]]
+          },
+          "fields": {},
+          "shadow": false,
+          "topLevel": false
+        },
+        "var_a_rep3": {
+          "opcode": "data_variable",
+          "next": null,
+          "parent": "say_a2",
+          "inputs": {},
+          "fields": {
+            "VARIABLE": ["a", "var_a"]
+          },
+          "shadow": false,
+          "topLevel": false
+        },
+        "change_n": {
+          "opcode": "data_changevariableby",
+          "next": null,
+          "parent": "say_a2",
+          "inputs": {
+            "VALUE": [1, [4, "1"]]
+          },
+          "fields": {
+            "VARIABLE": ["n", "var_n"]
+          },
+          "shadow": false,
+          "topLevel": false
+        }
+      }
+    }
+  ]
+}
