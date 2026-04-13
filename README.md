@@ -1,3 +1,5 @@
+![image.png](media/image.png)
+
 # scratch2c
 
 Convert MIT Scratch 3 (`.sb3`) projects into compilable C code.
