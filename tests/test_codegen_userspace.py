@@ -267,3 +267,89 @@ class TestUserspaceCodegen:
         code = _generate_userspace(project_json)
         assert "long var_1 = 1;" in code, f"Expected 'long var_1 = 1;' in:\n{code}"
         assert "long var_2 = 0;" in code, f"Expected 'long var_2 = 0;' in:\n{code}"
+
+    def test_set_variable_to_boolean_numeric_tag(self):
+        """'set var to true' encoded as [4, "true"] (numeric context)
+        must emit 'x = 1', not 'x = atol("true")' (which gives 0)."""
+        project_json = {
+            "targets": [{
+                "isStage": True,
+                "name": "Stage",
+                "variables": {"v1": ["x", 0]},
+                "blocks": {
+                    "hat": {
+                        "opcode": "event_whenflagclicked",
+                        "next": "set1",
+                        "parent": None,
+                        "inputs": {},
+                        "fields": {},
+                        "shadow": False,
+                        "topLevel": True,
+                    },
+                    "set1": {
+                        "opcode": "data_setvariableto",
+                        "next": "set2",
+                        "parent": "hat",
+                        "inputs": {"VALUE": [1, [4, "true"]]},
+                        "fields": {"VARIABLE": ["x", "v1"]},
+                        "shadow": False,
+                        "topLevel": False,
+                    },
+                    "set2": {
+                        "opcode": "data_setvariableto",
+                        "next": None,
+                        "parent": "set1",
+                        "inputs": {"VALUE": [1, [4, "false"]]},
+                        "fields": {"VARIABLE": ["x", "v1"]},
+                        "shadow": False,
+                        "topLevel": False,
+                    },
+                },
+            }],
+        }
+        code = _generate_userspace(project_json)
+        assert "x = 1;" in code, f"'true' in numeric tag should become 1:\n{code}"
+        assert "x = 0;" in code, f"'false' in numeric tag should become 0:\n{code}"
+
+    def test_tag10_string_true_is_text_not_boolean(self):
+        """'set var to "true"' encoded as [10, "true"] is user-typed text.
+
+        Tag 10 = string literal (from a text field in the Scratch UI).
+        Scratch's Number("true") is 0, not 1. The string "true" is not a
+        boolean — actual booleans come from reporter blocks like <contains>
+        or <and>, which are separate expression nodes in the IR.
+
+        NOTE: This is an open problem. The variable gets inferred as STRING
+        because "true" is not numeric. If the user intended it as a boolean,
+        they should use a boolean reporter block instead of typing "true".
+        """
+        project_json = {
+            "targets": [{
+                "isStage": True,
+                "name": "Stage",
+                "variables": {"v1": ["x", 0]},
+                "blocks": {
+                    "hat": {
+                        "opcode": "event_whenflagclicked",
+                        "next": "set1",
+                        "parent": None,
+                        "inputs": {},
+                        "fields": {},
+                        "shadow": False,
+                        "topLevel": True,
+                    },
+                    "set1": {
+                        "opcode": "data_setvariableto",
+                        "next": None,
+                        "parent": "hat",
+                        "inputs": {"VALUE": [1, [10, "true"]]},
+                        "fields": {"VARIABLE": ["x", "v1"]},
+                        "shadow": False,
+                        "topLevel": False,
+                    },
+                },
+            }],
+        }
+        code = _generate_userspace(project_json)
+        # Tag 10 "true" is a string — variable becomes STRING, value stays as text
+        assert '"true"' in code, f"Tag 10 'true' must stay as string text:\n{code}"
