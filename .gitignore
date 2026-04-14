@@ -1,4 +1,7 @@
 uv.lock
 .venv/
+**/__pycache__/
+
+
 build/*
 projects/*
