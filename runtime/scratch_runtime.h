@@ -152,4 +152,35 @@ static inline const char *scratch_letter_of(long index, const char *s) {
 }
 
 
+/* -------------------------------------------------------------------
+ * scratch_contains(haystack, needle) — case-insensitive substring check
+ * -------------------------------------------------------------------
+ * Returns 1 if haystack contains needle, 0 otherwise.
+ * Scratch's "contains" is case-insensitive, so we compare lowercase.
+ * NULL inputs return 0. Empty needle returns 1 (Scratch behavior).
+ */
+static inline long scratch_contains(const char *haystack, const char *needle) {
+    if (!haystack || !needle) return 0;
+    if (needle[0] == '\0') return 1;
+
+    long hlen = (long)strlen(haystack);
+    long nlen = (long)strlen(needle);
+    if (nlen > hlen) return 0;
+
+    for (long i = 0; i <= hlen - nlen; i++) {
+        long match = 1;
+        for (long j = 0; j < nlen; j++) {
+            /* Case-insensitive compare */
+            char hc = haystack[i + j];
+            char nc = needle[j];
+            if (hc >= 'A' && hc <= 'Z') hc += 32;
+            if (nc >= 'A' && nc <= 'Z') nc += 32;
+            if (hc != nc) { match = 0; break; }
+        }
+        if (match) return 1;
+    }
+    return 0;
+}
+
+
 #endif /* SCRATCH_RUNTIME_H */
