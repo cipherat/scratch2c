@@ -124,3 +124,40 @@ class TestTypeInference:
         project = build_ir(project_json)
         infer_types(project)
         assert project.all_variables()["var_name"].inferred_type == ScratchType.STRING
+
+    def test_boolean_initial_values(self):
+        """JSON true/false must become "1"/"0", not "True"/"False".
+
+        Scratch stores booleans as JSON true/false. Python's json.loads
+        turns these into True/False. str(True) gives "True" which is not
+        a valid C literal — it must be normalized to "1"/"0".
+        """
+        project_json = {
+            "targets": [{
+                "isStage": True,
+                "name": "Stage",
+                "variables": {
+                    "v1": ["var_1", True],
+                    "v2": ["var_2", False],
+                },
+                "blocks": {
+                    "hat": {
+                        "opcode": "event_whenflagclicked",
+                        "next": None,
+                        "parent": None,
+                        "inputs": {},
+                        "fields": {},
+                        "shadow": False,
+                        "topLevel": True,
+                    },
+                },
+            }],
+        }
+        project = build_ir(project_json)
+        infer_types(project)
+        v1 = project.all_variables()["v1"]
+        v2 = project.all_variables()["v2"]
+        assert v1.initial_value == "1", f"True should become '1', got '{v1.initial_value}'"
+        assert v2.initial_value == "0", f"False should become '0', got '{v2.initial_value}'"
+        assert v1.inferred_type == ScratchType.LONG
+        assert v2.inferred_type == ScratchType.LONG

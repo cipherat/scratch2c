@@ -240,3 +240,30 @@ class TestUserspaceCodegen:
         code = _generate_userspace(project_json)
         assert "% (" in code
         assert "!= 0" in code
+
+    def test_boolean_initial_values_in_declaration(self):
+        """Variables initialized with JSON true/false must emit 1/0 in C."""
+        project_json = {
+            "targets": [{
+                "isStage": True,
+                "name": "Stage",
+                "variables": {
+                    "v1": ["var_1", True],
+                    "v2": ["var_2", False],
+                },
+                "blocks": {
+                    "hat": {
+                        "opcode": "event_whenflagclicked",
+                        "next": None,
+                        "parent": None,
+                        "inputs": {},
+                        "fields": {},
+                        "shadow": False,
+                        "topLevel": True,
+                    },
+                },
+            }],
+        }
+        code = _generate_userspace(project_json)
+        assert "long var_1 = 1;" in code, f"Expected 'long var_1 = 1;' in:\n{code}"
+        assert "long var_2 = 0;" in code, f"Expected 'long var_2 = 0;' in:\n{code}"
