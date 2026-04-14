@@ -345,6 +345,10 @@ def _build_expression(block_id: str, blocks: dict) -> Expression:
         index = _resolve_input(block, "LETTER", blocks)
         string = _resolve_input(block, "STRING", blocks)
         return CallExpr(func="scratch_letter_of", args=[index, string])
+    if opcode == "operator_contains":
+        haystack = _resolve_input(block, "STRING1", blocks)
+        needle = _resolve_input(block, "STRING2", blocks)
+        return CallExpr(func="scratch_contains", args=[haystack, needle])
 
     # Variable reporter
     if opcode == "data_variable":
@@ -395,8 +399,11 @@ def _resolve_input(block: dict, input_name: str, blocks: dict) -> Expression:
     # Case 2: value_part is an array (literal or variable shorthand)
     if isinstance(value_part, list) and len(value_part) >= 2:
         type_tag = value_part[0]
-        # Type tags 4-10: literal values (number, string, etc.)
-        if type_tag in (4, 5, 6, 7, 8, 9, 10):
+        # Type tags 4-9: numeric literals — "true"/"false" here mean 1/0
+        if type_tag in (4, 5, 6, 7, 8, 9):
+            return Literal(value=_normalize_numeric_literal(value_part[1]))
+        # Type tag 10: string literal — "true" here is the text "true"
+        if type_tag == 10:
             return Literal(value=_normalize_value(value_part[1]))
         # Type tag 12: variable reporter shorthand [12, name, id]
         if type_tag == 12 and len(value_part) >= 3:
@@ -472,11 +479,12 @@ def _get_field_id(block: dict, field_name: str) -> str | None:
 # ---------------------------------------------------------------------------
 
 def _normalize_value(raw: object) -> str:
-    """Normalize a JSON value from project.json into a string for the IR.
+    """Normalize a raw JSON value into a string for the IR.
 
-    Scratch's JSON can contain Python bools (from JSON true/false), None
-    (from JSON null), ints, floats, or strings. We need a consistent string
-    representation that downstream stages (type inference, codegen) can handle.
+    Handles Python bools (from JSON true/false), None, ints, and floats.
+    Does NOT handle the strings "true"/"false" — those are context-dependent
+    and must be resolved by the caller based on the Scratch type tag.
+    See _normalize_numeric_literal() for that case.
 
     NOTE: JSON true/false map to Python True/False. str(True) gives "True"
     which is NOT a valid C literal. We convert booleans to "1"/"0".
@@ -489,11 +497,28 @@ def _normalize_value(raw: object) -> str:
     if isinstance(raw, int):
         return str(raw)
     if isinstance(raw, float):
-        # Truncate to int for our type system (we don't support floats yet)
         if raw == int(raw):
             return str(int(raw))
         return str(raw)
     return str(raw)
+
+
+def _normalize_numeric_literal(value: str) -> str:
+    """Normalize a literal that appeared in a numeric context (type tags 4-9).
+
+    Scratch uses these tags for number inputs. Booleans get encoded as the
+    strings "true"/"false" in these slots because Scratch treats them as 1/0
+    in numeric contexts. A user-typed string like "true" in a say block would
+    use tag 10 (string), not tags 4-9, so we only do this conversion for
+    numeric tags.
+    """
+    if isinstance(value, str):
+        low = value.lower()
+        if low == "true":
+            return "1"
+        if low == "false":
+            return "0"
+    return _normalize_value(value)
 
 
 def _sanitize_name(name: str) -> str:
