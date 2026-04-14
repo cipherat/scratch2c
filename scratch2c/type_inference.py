@@ -106,7 +106,7 @@ def _classify_expression(expr: Expression) -> ScratchType:
     if isinstance(expr, CallExpr):
         if expr.func in ("scratch_join", "scratch_letter_of"):
             return ScratchType.STRING
-        if expr.func == "scratch_strlen":
+        if expr.func in ("scratch_strlen", "scratch_contains"):
             return ScratchType.LONG
         return ScratchType.UNKNOWN
 
@@ -117,9 +117,18 @@ def _classify_expression(expr: Expression) -> ScratchType:
 
 
 def _classify_literal(value: str) -> ScratchType:
-    """Is this literal a number or a string?"""
+    """Is this literal a number or a string?
+
+    NOTE: This function cannot distinguish a user-typed "true" (which is a
+    string) from a boolean true (which is a number). By the time a value
+    reaches this function, the Scratch type tag has been consumed by the IR
+    builder. If the value came from a numeric tag (4-9), it was already
+    normalized to "1"/"0" before the IR was built. If it came from tag 10
+    (user-typed string), it arrives here as the raw string "true" — and
+    Scratch's Number("true") is 0, not 1, so it is correctly classified as
+    STRING.
+    """
     try:
-        # Accept integers and floats
         float(value)
         return ScratchType.LONG
     except (ValueError, TypeError):
@@ -224,3 +233,6 @@ def _propagate_expr_context(
                 _propagate_expr_context(expr.args[0], ScratchType.LONG, variables)
             if len(expr.args) >= 2:
                 _propagate_expr_context(expr.args[1], ScratchType.STRING, variables)
+        elif expr.func == "scratch_contains":
+            for arg in expr.args:
+                _propagate_expr_context(arg, ScratchType.STRING, variables)
