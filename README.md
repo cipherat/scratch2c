@@ -19,7 +19,7 @@ A working alternative of the scratchnative program. If you've built something in
 ## Quickstart
 
 ```bash
-# Clone and sync (creates a venv, installs everything)
+# Clone and sync
 git clone https://github.com/scratch2c/scratch2c.git
 cd scratch2c
 uv sync
@@ -47,8 +47,6 @@ Or call the CLI directly:
 uv run scratch2c my_project.sb3 -o output.c --backend userspace
 uv run scratch2c my_project.sb3 -o output.c --backend kernel
 ```
-
-Don't have uv? Install it with `curl -LsSf https://astral.sh/uv/install.sh | sh`.
 
 ## Supported blocks
 
@@ -91,8 +89,8 @@ Don't have uv? Install it with `curl -LsSf https://astral.sh/uv/install.sh | sh`
 ## Development
 
 ```bash
-uv sync                                           # install everything
-make test                                         # run test suite
+uv sync                                            # install everything
+make test                                          # run test suite
 make compile-userspace SB3=projects/fibonacci.sb3  # transpile + gcc
 make kbuild SB3=projects/fibonacci.sb3             # transpile + kbuild
 make example-fib                                   # dump both backends to stdout
