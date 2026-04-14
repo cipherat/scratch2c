@@ -55,7 +55,8 @@ def _build_sprite(target: dict) -> Sprite:
     for var_id, var_info in target.get("variables", {}).items():
         # var_info is [name, initial_value]
         var_name = var_info[0] if isinstance(var_info, list) else str(var_info)
-        initial = str(var_info[1]) if isinstance(var_info, list) and len(var_info) > 1 else "0"
+        raw_initial = var_info[1] if isinstance(var_info, list) and len(var_info) > 1 else 0
+        initial = _normalize_value(raw_initial)
         sprite.variables[var_id] = Variable(var_id=var_id, name=var_name, initial_value=initial)
 
     blocks = target.get("blocks", {})
@@ -396,23 +397,23 @@ def _resolve_input(block: dict, input_name: str, blocks: dict) -> Expression:
         type_tag = value_part[0]
         # Type tags 4-10: literal values (number, string, etc.)
         if type_tag in (4, 5, 6, 7, 8, 9, 10):
-            return Literal(value=str(value_part[1]))
+            return Literal(value=_normalize_value(value_part[1]))
         # Type tag 12: variable reporter shorthand [12, name, id]
         if type_tag == 12 and len(value_part) >= 3:
             return VariableRef(var_id=str(value_part[2]), var_name=str(value_part[1]))
         # Type tag 13: broadcast shorthand
         if type_tag == 13:
-            return Literal(value=str(value_part[1]))
-        return Literal(value=str(value_part[1]))
+            return Literal(value=_normalize_value(value_part[1]))
+        return Literal(value=_normalize_value(value_part[1]))
 
     # Case 3: null input (e.g., empty condition slot)
     if value_part is None:
         # Check if there's a shadow (third element)
         if len(inp) >= 3 and isinstance(inp[2], list):
-            return Literal(value=str(inp[2][1]) if len(inp[2]) >= 2 else "0")
+            return Literal(value=_normalize_value(inp[2][1]) if len(inp[2]) >= 2 else "0")
         return Literal(value="0")
 
-    return Literal(value=str(value_part))
+    return Literal(value=_normalize_value(value_part))
 
 
 def _build_substack(block: dict, substack_name: str, blocks: dict) -> list[Statement]:
@@ -469,6 +470,31 @@ def _get_field_id(block: dict, field_name: str) -> str | None:
 # ---------------------------------------------------------------------------
 # Utilities
 # ---------------------------------------------------------------------------
+
+def _normalize_value(raw: object) -> str:
+    """Normalize a JSON value from project.json into a string for the IR.
+
+    Scratch's JSON can contain Python bools (from JSON true/false), None
+    (from JSON null), ints, floats, or strings. We need a consistent string
+    representation that downstream stages (type inference, codegen) can handle.
+
+    NOTE: JSON true/false map to Python True/False. str(True) gives "True"
+    which is NOT a valid C literal. We convert booleans to "1"/"0".
+    """
+    if isinstance(raw, bool):
+        # MUST check bool before int — bool is a subclass of int in Python
+        return "1" if raw else "0"
+    if raw is None:
+        return "0"
+    if isinstance(raw, int):
+        return str(raw)
+    if isinstance(raw, float):
+        # Truncate to int for our type system (we don't support floats yet)
+        if raw == int(raw):
+            return str(int(raw))
+        return str(raw)
+    return str(raw)
+
 
 def _sanitize_name(name: str) -> str:
     """Convert a Scratch name to a valid C identifier.
