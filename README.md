@@ -75,6 +75,7 @@ uv run scratch2c my_project.sb3 -o output.c --backend kernel
 | Operators | `operator_join` | `scratch_join()` |
 | Operators | `operator_length` | `scratch_strlen()` |
 | Operators | `operator_letter_of` | `scratch_letter_of()` |
+| Operators | `operator_contains` | `scratch_contains()` |
 | Procedures | `procedures_definition` | function definition |
 | Procedures | `procedures_call` (with args) | function call |
 
