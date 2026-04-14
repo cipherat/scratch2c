@@ -341,7 +341,11 @@ class CodegenBackend(ABC):
                 try:
                     return str(int(float(expr.value)))
                 except ValueError:
-                    # String literal used in numeric context — atol
+                    # String literal used in numeric context — atol at runtime.
+                    # NOTE: atol("true") returns 0, which matches Scratch's
+                    # behavior: Number("true") is 0. Actual booleans arrive
+                    # as "1"/"0" because the IR builder normalizes them at
+                    # parse time (tags 4-9) or from JSON booleans.
                     return f'atol("{_escape_c(expr.value)}")'
 
         if isinstance(expr, VariableRef):
@@ -430,6 +434,10 @@ class CodegenBackend(ABC):
             idx = self._emit_expr_as_long(expr.args[0], variables) if expr.args else "0"
             s = self._emit_expr_as_string(expr.args[1], variables) if len(expr.args) > 1 else '""'
             return f"scratch_letter_of({idx}, {s})"
+        if expr.func == "scratch_contains":
+            haystack = self._emit_expr_as_string(expr.args[0], variables) if expr.args else '""'
+            needle = self._emit_expr_as_string(expr.args[1], variables) if len(expr.args) > 1 else '""'
+            return f"scratch_contains({haystack}, {needle})"
 
         # Generic fallback
         args = ", ".join(self._emit_expr_as_long(a, variables) for a in expr.args)
@@ -522,7 +530,7 @@ def _expr_type(expr: Expression, variables: dict[str, Variable]) -> ScratchType:
     if isinstance(expr, CallExpr):
         if expr.func in ("scratch_join", "scratch_letter_of"):
             return ScratchType.STRING
-        if expr.func == "scratch_strlen":
+        if expr.func in ("scratch_strlen", "scratch_contains"):
             return ScratchType.LONG
         return ScratchType.UNKNOWN
 
